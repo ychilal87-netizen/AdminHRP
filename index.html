@@ -38,9 +38,16 @@
             </div>
         </div>
 
+        <!-- Search Section with Icons -->
         <div class="space-y-2">
-            <input type="text" id="adminSearch" oninput="filterAll()" placeholder="በስልክ ወይም በስም ፈልግ..." class="w-full px-4 py-3 rounded-xl outline-none text-sm border border-white/10">
-            <input type="text" id="teamSearch" oninput="filterAll()" placeholder="በጋባዥ ኮድ (Team) ፈልግ..." class="w-full px-4 py-3 rounded-xl outline-none text-sm border border-white/10">
+            <div class="relative flex items-center">
+                <i class="fas fa-search absolute left-4 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" id="adminSearch" oninput="filterAll()" placeholder="በስልክ ወይም በስም ፈልግ..." class="w-full pl-11 pr-4 py-3 rounded-xl outline-none text-sm border border-white/10">
+            </div>
+            <div class="relative flex items-center">
+                <i class="fas fa-users absolute left-4 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" id="teamSearch" oninput="filterAll()" placeholder="በጋባዥ ኮድ (Team) ፈልግ..." class="w-full pl-11 pr-4 py-3 rounded-xl outline-none text-sm border border-white/10">
+            </div>
         </div>
 
         <div class="flex bg-slate-900 rounded-2xl p-1 shadow-inner">
@@ -164,7 +171,7 @@
             document.getElementById('total-pending').innerText = count;
         }
 
-        // --- ማስተካከያ ተግባራት (Controls) ---
+        // --- Controls ---
 
         window.controlVIP = async (id, currentVip) => {
             const newVal = prompt(`የ ${id} አዲስ VIP ያስገቡ (0-5):\nአሁን ያለው: VIP ${currentVip}`, currentVip);
@@ -212,12 +219,16 @@
 
         window.txAction = async (uk, rk, s, t, a) => {
             try {
-                const uRef = ref(db, `users/${uk}`);
+                // Firebase path key ማጽዳት (ስልክ ቁጥር ብቻ እንዲሆን)
+                const cleanUk = uk.replace(/[^0-9]/g, "");
+                const uRef = ref(db, `users/${cleanUk}`);
                 const rRef = ref(db, `records/${uk}/${rk}`);
+                
                 if(s === "Approved" && t === "Deposit") {
                     const snap = await get(uRef);
                     if(snap.exists()) await update(uRef, { balance: (snap.val().balance || 0) + a });
                 } else if(s === "Rejected" && t === "Withdraw") {
+                    // ዊዝድሮው ሪጀክት ሲደረግ ብሩ ወደ ተጠቃሚው አካውንት ይመለሳል (ይደመራል)
                     const snap = await get(uRef);
                     if(snap.exists()) await update(uRef, { balance: (snap.val().balance || 0) + a });
                 }
