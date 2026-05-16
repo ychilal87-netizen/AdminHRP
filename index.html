@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Investment - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        th { background: #1e293b; color: #fbbf24; text-transform: uppercase; font-size: 0.75rem; }
+        td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .tab-btn.active { border-bottom: 4px solid #fbbf24; color: #fbbf24; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8 glass p-6 rounded-3xl">
+            <div>
+                <h1 class="text-2xl font-black text-yellow-500">HR ADMIN PANEL</h1>
+                <p class="text-gray-400 text-xs">የሲስተም መቆጣጠሪያ ሰሌዳ</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-400">ጠቅላላ ደንበኞች</p>
+                <p id="stat-users" class="text-xl font-bold text-white">0</p>
+            </div>
+        </header>
+
+        <div class="flex space-x-6 mb-6 border-b border-gray-700">
+            <button onclick="switchTab('users')" id="btn-users" class="tab-btn active pb-2 font-bold">ደንበኞች</button>
+            <button onclick="switchTab('finance')" id="btn-finance" class="tab-btn pb-2 font-bold">ገቢና ወጪ (FT)</button>
+            <button onclick="switchTab('teams')" id="btn-teams" class="tab-btn pb-2 font-bold">የቡድን ሁኔታ</button>
+        </div>
+
+        <section id="sec-users" class="tab-content">
+            <div class="glass rounded-3xl overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr>
+                            <th class="p-4">ስልክ</th>
+                            <th class="p-4">Password</th>
+                            <th class="p-4">Withdraw PIN</th>
+                            <th class="p-4">ባንክ/አካውንት</th>
+                            <th class="p-4">Balance</th>
+                            <th class="p-4">VIP</th>
+                            <th class="p-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body" class="text-sm"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="sec-finance" class="tab-content hidden">
+            <div class="glass rounded-3xl overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr>
+                            <th class="p-4">ተጠቃሚ</th>
+                            <th class="p-4">አይነት</th>
+                            <th class="p-4">መጠን</th>
+                            <th class="p-4">FT / መረጃ</th>
+                            <th class="p-4">ሁኔታ</th>
+                            <th class="p-4">ማጽደቂያ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="finance-table-body" class="text-sm"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="sec-teams" class="tab-content hidden">
+            <div class="glass rounded-3xl p-6">
+                <h3 class="text-yellow-500 font-bold mb-4">የጋባዥና ተጋባዥ ዝርዝር</h3>
+                <div id="team-status-list" class="space-y-4"></div>
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDE_60krnzvt-40JavcDEABzf0JqbeBZZY",
+            authDomain: "house-rent-project-f16dd.firebaseapp.com",
+            databaseURL: "https://house-rent-project-f16dd-default-rtdb.firebaseio.com",
+            projectId: "house-rent-project-f16dd",
+            storageBucket: "house-rent-project-f16dd.firebasestorage.app",
+            messagingSenderId: "76197922139",
+            appId: "1:76197922139:web:d4eea517c1c04b2496467e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sec-' + tab).classList.remove('hidden');
+            document.getElementById('btn-' + tab).classList.add('active');
+        };
+
+        onValue(ref(db, 'users'), (snapshot) => {
+            const body = document.getElementById('user-table-body');
+            const teamBody = document.getElementById('team-status-list');
+            body.innerHTML = "";
+            teamBody.innerHTML = "";
+            let count = 0;
+            snapshot.forEach((child) => {
+                const user = child.val();
+                count++;
+                
+                body.innerHTML += `
+                    <tr>
+                        <td class="p-4 font-bold text-yellow-500">${user.phone}</td>
+                        <td class="p-4 text-red-400 font-mono">${user.password}</td>
+                        <td class="p-4 text-blue-400 font-mono">${user.pin || '---'}</td>
+                        <td class="p-4 text-xs">
+                            ${user.bankName || 'ያልተመዘገበ'}<br>
+                            <span class="text-gray-400">${user.fullName || ''}</span><br>
+                            <span class="text-green-500">${user.bankAcc || ''}</span>
+                        </td>
+                        <td class="p-4 font-bold text-white">${(user.balance || 0).toFixed(2)}</td>
+                        <td class="p-4"><span class="bg-yellow-500 text-black px-2 py-1 rounded text-[10px] font-black">VIP ${user.vip}</span></td>
+                        <td class="p-4">
+                            <button onclick="editBalance('${child.key}', ${user.balance})" class="text-blue-400 mr-2"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteUser('${child.key}')" class="text-red-500"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+
+                teamBody.innerHTML += `
+                    <div class="border-b border-gray-800 pb-2 flex justify-between">
+                        <span>${user.phone} (Code: ${user.myInvite})</span>
+                        <span class="text-yellow-500">ተጋባዦች: ${user.referralCount || 0}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('stat-users').innerText = count;
+        });
+
+        onValue(ref(db, 'records'), (snapshot) => {
+            const body = document.getElementById('finance-table-body');
+            body.innerHTML = "";
+            snapshot.forEach((userRecords) => {
+                const phone = userRecords.key;
+                userRecords.forEach((recordChild) => {
+                    const rec = recordChild.val();
+                    const recId = recordChild.key;
+                    
+                    let statusColor = 'text-green-500';
+                    if (rec.status === 'Pending') statusColor = 'text-orange-500';
+                    if (rec.status === 'Rejected') statusColor = 'text-red-500';
+
+                    body.innerHTML += `
+                        <tr class="hover:bg-white/5">
+                            <td class="p-4">+${phone}</td>
+                            <td class="p-4">${rec.type}</td>
+                            <td class="p-4 font-bold text-yellow-500">${rec.amount} ETB</td>
+                            <td class="p-4 text-xs">${rec.ft || 'Withdraw Request'}</td>
+                            <td class="p-4">
+                                <span class="${statusColor}">${rec.status}</span>
+                            </td>
+                            <td class="p-4 text-xs flex space-x-2">
+                                ${rec.status === 'Pending' ? 
+                                `<button onclick="approveAction('${phone}', '${recId}', '${rec.type}', ${rec.amount})" class="bg-green-600 px-3 py-1 rounded-lg text-white">Approve</button>
+                                 <button onclick="rejectAction('${phone}', '${recId}', '${rec.type}', ${rec.amount})" class="bg-red-600 px-3 py-1 rounded-lg text-white">Reject</button>` 
+                                : (rec.status === 'Approved' ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-times-circle text-red-500"></i>')}
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        });
+
+        window.approveAction = async (phone, recId, type, amount) => {
+            if(!confirm("ይህንን ክፍያ እርግጠኛ ነህ ማጽደቅ ትፈልጋለህ?")) return;
+            await update(ref(db, `records/${phone}/${recId}`), { status: "Approved" });
+            if(type === "Deposit") {
+                const userSnap = await get(ref(db, `users/+${phone}`));
+                if(userSnap.exists()) {
+                    const newBal = (userSnap.val().balance || 0) + amount;
+                    await update(ref(db, `users/+${phone}`), { balance: newBal });
+                }
+            }
+            alert("ተሳክቷል!");
+        };
+
+        // የ Reject ተግባር - ወጪ (Withdraw) ከሆነ ብሩን ተመላሽ ያደርጋል
+        window.rejectAction = async (phone, recId, type, amount) => {
+            if(!confirm("ይህንን ጥያቄ ውድቅ (Reject) ማድረግ ትፈልጋለህ?")) return;
+            
+            // 1. ሁኔታውን Rejected ማድረግ
+            await update(ref(db, `records/${phone}/${recId}`), { status: "Rejected" });
+            
+            // 2. አይነት (Type) ወጪ (Withdraw ወይም ሌላ ከ Deposit ውጪ) ከሆነ ብሩን መመለስ
+            if(type !== "Deposit") {
+                const userSnap = await get(ref(db, `users/+${phone}`));
+                if(userSnap.exists()) {
+                    const currentBal = userSnap.val().balance || 0;
+                    const newBal = currentBal + amount; // የተጠየቀውን የብር መጠን መልሶ መደመር
+                    await update(ref(db, `users/+${phone}`), { balance: newBal });
+                }
+            }
+            
+            alert("ጥያቄው ውድቅ ተደርጓል! ብሩ ተመላሽ ሆኗል።");
+        };
+
+        window.editBalance = (phone, current) => {
+            const amt = prompt("አዲስ የሂሳብ መጠን ያስገቡ:", current);
+            if(amt !== null) {
+                update(ref(db, `users/${phone}`), { balance: parseFloat(amt) });
+            }
+        };
+
+        window.deleteUser = (phone) => {
+            if(confirm(phone + " ይህንን ደንበኛ መሰረዝ ትፈልጋለህ?")) {
+                remove(ref(db, `users/${phone}`));
+            }
+        };
+    </script>
+</body>
+</html>
