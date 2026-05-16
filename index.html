@@ -1,87 +1,120 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Investment - Admin Panel</title>
+    <title>HRP | System Admin Dashboard (Direct Access)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        body { background: #0f172a; font-family: 'Inter', sans-serif; color: white; }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        th { background: #1e293b; color: #fbbf24; text-transform: uppercase; font-size: 0.75rem; }
-        td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .tab-btn.active { border-bottom: 4px solid #fbbf24; color: #fbbf24; }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
-        <header class="flex justify-between items-center mb-8 glass p-6 rounded-3xl">
-            <div>
-                <h1 class="text-2xl font-black text-yellow-500">HR ADMIN PANEL</h1>
-                <p class="text-gray-400 text-xs">የሲስተም መቆጣጠሪያ ሰሌዳ</p>
-            </div>
-            <div class="text-right">
-                <p class="text-xs text-gray-400">ጠቅላላ ደንበኞች</p>
-                <p id="stat-users" class="text-xl font-bold text-white">0</p>
-            </div>
-        </header>
 
-        <div class="flex space-x-6 mb-6 border-b border-gray-700">
-            <button onclick="switchTab('users')" id="btn-users" class="tab-btn active pb-2 font-bold">ደንበኞች</button>
-            <button onclick="switchTab('finance')" id="btn-finance" class="tab-btn pb-2 font-bold">ገቢና ወጪ (FT)</button>
-            <button onclick="switchTab('teams')" id="btn-teams" class="tab-btn pb-2 font-bold">የቡድን ሁኔታ</button>
+    <!-- MAIN ADMIN INTERFACE -->
+    <main id="admin-dashboard" class="w-full max-w-6xl mx-auto space-y-6">
+        <!-- HEADER -->
+        <div class="flex flex-col md:flex-row justify-between items-center bg-gray-800 p-4 rounded-2xl border border-yellow-500/30 gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-yellow-500 text-black p-3 rounded-xl"><i class="fas fa-database text-xl"></i></div>
+                <div>
+                    <h1 class="text-xl font-black text-yellow-500">HRP CENTRAL SYSTEM</h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest">Live Platform Management</p>
+                </div>
+            </div>
+            <div class="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl font-bold">
+                <i class="fas fa-circle text-[9px] mr-1 animate-pulse"></i> LIVE CONNECTION
+            </div>
         </div>
 
-        <section id="sec-users" class="tab-content">
-            <div class="glass rounded-3xl overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
+        <!-- SEARCH AND FILTERS -->
+        <div class="glass p-5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div class="md:col-span-2">
+                <label class="text-xs text-gray-400 block mb-2 font-medium">Search System User</label>
+                <div class="flex gap-2">
+                    <input type="text" id="admin-search-input" placeholder="Enter Phone (+2519...) or Invite Code (HRP123)" class="flex-1 bg-black/40 p-3 rounded-xl border border-gray-500 outline-none text-xs">
+                    <button onclick="adminSearchUser()" class="bg-yellow-500 text-black px-6 rounded-xl text-xs font-bold hover:bg-yellow-400 transition"><i class="fas fa-search mr-1"></i> Search</button>
+                </div>
+            </div>
+            <div>
+                <button onclick="loadAdminDashboard()" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl text-xs font-bold w-full transition"><i class="fas fa-sync-alt mr-1"></i> Refresh System Data</button>
+            </div>
+        </div>
+
+        <!-- USER CONTROL & BALANCE ADJUSTER -->
+        <div class="glass p-6 rounded-3xl space-y-4">
+            <h2 class="text-yellow-500 font-bold border-l-4 border-yellow-500 pl-2 text-sm uppercase tracking-wider">User Balance & VIP Override</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <input type="text" id="ctrl-user-phone" placeholder="Target User Phone (+2519...)" class="bg-black/40 p-3 rounded-xl border border-gray-500 outline-none text-xs">
+                <input type="number" id="ctrl-amount" placeholder="Amount (ETB)" class="bg-black/40 p-3 rounded-xl border border-gray-500 outline-none text-xs">
+                <select id="ctrl-vip" class="bg-black/40 p-3 rounded-xl border border-gray-500 outline-none text-xs text-gray-300">
+                    <option value="">-- Change VIP Rank (Optional) --</option>
+                    <option value="0">VIP 0 (No Rent)</option>
+                    <option value="1">VIP 1</option>
+                    <option value="2">VIP 2</option>
+                    <option value="3">VIP 3</option>
+                    <option value="4">VIP 4</option>
+                    <option value="5">VIP 5</option>
+                </select>
+                <div class="flex gap-2">
+                    <button onclick="adjustBalance('add')" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold py-2 shadow-md transition">+ Add Bal</button>
+                    <button onclick="adjustBalance('sub')" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold py-2 shadow-md transition">- Deduct</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSACTION REVIEWS (PENDING APPROVALS) -->
+        <div class="glass p-5 rounded-3xl space-y-3">
+            <h2 class="text-yellow-500 font-bold border-l-4 border-yellow-500 pl-2 text-sm uppercase tracking-wider">Pending Deposits & Withdrawal Requests</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left border-collapse">
+                    <thead class="bg-gray-800 text-gray-300 uppercase text-[10px] tracking-wider">
                         <tr>
-                            <th class="p-4">ስልክ</th>
-                            <th class="p-4">Password</th>
-                            <th class="p-4">Withdraw PIN</th>
-                            <th class="p-4">ባንክ/አካውንት</th>
-                            <th class="p-4">Balance</th>
-                            <th class="p-4">VIP</th>
-                            <th class="p-4">Action</th>
+                            <th class="p-3">User Phone</th>
+                            <th class="p-3">Action Type</th>
+                            <th class="p-3">Requested Amount</th>
+                            <th class="p-3">Verification Details / Bank Account Profile</th>
+                            <th class="p-3">Current Status</th>
+                            <th class="p-3 text-center">System Management</th>
                         </tr>
                     </thead>
-                    <tbody id="user-table-body" class="text-sm"></tbody>
+                    <tbody id="admin-pending-table" class="divide-y divide-white/10">
+                        <tr><td colspan="6" class="p-4 text-center text-gray-500">No active pending transactions found.</td></tr>
+                    </tbody>
                 </table>
             </div>
-        </section>
+        </div>
 
-        <section id="sec-finance" class="tab-content hidden">
-            <div class="glass rounded-3xl overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
+        <!-- ALL USERS DIRECTORY -->
+        <div class="glass p-5 rounded-3xl space-y-3">
+            <h2 class="text-yellow-500 font-bold border-l-4 border-yellow-500 pl-2 text-sm uppercase tracking-wider">Registered System Users Directory</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-center border-collapse">
+                    <thead class="bg-yellow-500 text-black font-bold uppercase text-[10px]">
                         <tr>
-                            <th class="p-4">ተጠቃሚ</th>
-                            <th class="p-4">አይነት</th>
-                            <th class="p-4">መጠን</th>
-                            <th class="p-4">FT / መረጃ</th>
-                            <th class="p-4">ሁኔታ</th>
-                            <th class="p-4">ማጽደቂያ</th>
+                            <th class="p-3 text-left">Phone Number</th>
+                            <th class="p-3">Invite Code</th>
+                            <th class="p-3">Referred By</th>
+                            <th class="p-3">Current Balance</th>
+                            <th class="p-3">VIP Tier</th>
+                            <th class="p-3 text-left">Bank Account Name</th>
+                            <th class="p-3 text-left">Banker & Account Number</th>
                         </tr>
                     </thead>
-                    <tbody id="finance-table-body" class="text-sm"></tbody>
+                    <tbody id="admin-users-table" class="divide-y divide-white/10"></tbody>
                 </table>
             </div>
-        </section>
+        </div>
+    </main>
 
-        <section id="sec-teams" class="tab-content hidden">
-            <div class="glass rounded-3xl p-6">
-                <h3 class="text-yellow-500 font-bold mb-4">የጋባዥና ተጋባዥ ዝርዝር</h3>
-                <div id="team-status-list" class="space-y-4"></div>
-            </div>
-        </section>
-    </div>
-
+    <!-- FIREBASE MODULE LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+        import { getDatabase, ref, set, get, update, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        
+        // የእርስዎ Firebase ማረጋገጫ ኮድ
         const firebaseConfig = {
             apiKey: "AIzaSyDE_60krnzvt-40JavcDEABzf0JqbeBZZY",
             authDomain: "house-rent-project-f16dd.firebaseapp.com",
@@ -95,130 +128,165 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        window.switchTab = (tab) => {
-            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('sec-' + tab).classList.remove('hidden');
-            document.getElementById('btn-' + tab).classList.add('active');
-        };
-
-        onValue(ref(db, 'users'), (snapshot) => {
-            const body = document.getElementById('user-table-body');
-            const teamBody = document.getElementById('team-status-list');
-            body.innerHTML = "";
-            teamBody.innerHTML = "";
-            let count = 0;
-            snapshot.forEach((child) => {
-                const user = child.val();
-                count++;
-                
-                body.innerHTML += `
-                    <tr>
-                        <td class="p-4 font-bold text-yellow-500">${user.phone}</td>
-                        <td class="p-4 text-red-400 font-mono">${user.password}</td>
-                        <td class="p-4 text-blue-400 font-mono">${user.pin || '---'}</td>
-                        <td class="p-4 text-xs">
-                            ${user.bankName || 'ያልተመዘገበ'}<br>
-                            <span class="text-gray-400">${user.fullName || ''}</span><br>
-                            <span class="text-green-500">${user.bankAcc || ''}</span>
-                        </td>
-                        <td class="p-4 font-bold text-white">${(user.balance || 0).toFixed(2)}</td>
-                        <td class="p-4"><span class="bg-yellow-500 text-black px-2 py-1 rounded text-[10px] font-black">VIP ${user.vip}</span></td>
-                        <td class="p-4">
-                            <button onclick="editBalance('${child.key}', ${user.balance})" class="text-blue-400 mr-2"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteUser('${child.key}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-
-                teamBody.innerHTML += `
-                    <div class="border-b border-gray-800 pb-2 flex justify-between">
-                        <span>${user.phone} (Code: ${user.myInvite})</span>
-                        <span class="text-yellow-500">ተጋባዦች: ${user.referralCount || 0}</span>
-                    </div>
-                `;
-            });
-            document.getElementById('stat-users').innerText = count;
+        // ገጹ እንደተከፈተ በቀጥታ መረጃዎችን ይጭናል (No Login Required)
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAdminDashboard();
         });
 
-        onValue(ref(db, 'records'), (snapshot) => {
-            const body = document.getElementById('finance-table-body');
-            body.innerHTML = "";
-            snapshot.forEach((userRecords) => {
-                const phone = userRecords.key;
-                userRecords.forEach((recordChild) => {
-                    const rec = recordChild.val();
-                    const recId = recordChild.key;
-                    
-                    let statusColor = 'text-green-500';
-                    if (rec.status === 'Pending') statusColor = 'text-orange-500';
-                    if (rec.status === 'Rejected') statusColor = 'text-red-500';
+        // ሙሉ ዳሽቦርድ መረጃዎችን መጫኛ
+        window.loadAdminDashboard = async () => {
+            const usersSnap = await get(ref(db, 'users'));
+            const recordsSnap = await get(ref(db, 'records'));
+            
+            let usersHtml = "";
+            let pendingHtml = "";
+            let usersDataMap = {};
 
-                    body.innerHTML += `
-                        <tr class="hover:bg-white/5">
-                            <td class="p-4">+${phone}</td>
-                            <td class="p-4">${rec.type}</td>
-                            <td class="p-4 font-bold text-yellow-500">${rec.amount} ETB</td>
-                            <td class="p-4 text-xs">${rec.ft || 'Withdraw Request'}</td>
-                            <td class="p-4">
-                                <span class="${statusColor}">${rec.status}</span>
-                            </td>
-                            <td class="p-4 text-xs flex space-x-2">
-                                ${rec.status === 'Pending' ? 
-                                `<button onclick="approveAction('${phone}', '${recId}', '${rec.type}', ${rec.amount})" class="bg-green-600 px-3 py-1 rounded-lg text-white">Approve</button>
-                                 <button onclick="rejectAction('${phone}', '${recId}', '${rec.type}', ${rec.amount})" class="bg-red-600 px-3 py-1 rounded-lg text-white">Reject</button>` 
-                                : (rec.status === 'Approved' ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-times-circle text-red-500"></i>')}
-                            </td>
-                        </tr>
-                    `;
+            if (usersSnap.exists()) {
+                usersSnap.forEach(u => {
+                    usersDataMap[u.key] = u.val();
+                    const user = u.val();
+                    usersHtml += `<tr class="border-b border-white/10 hover:bg-white/5 transition">
+                        <td class="p-3 text-left font-bold">${user.phone}</td>
+                        <td class="p-3 text-yellow-500 font-mono">${user.myInvite || 'N/A'}</td>
+                        <td class="p-3 text-gray-400 font-mono">${user.inviteBy || 'Direct'}</td>
+                        <td class="p-3 font-bold text-green-400">${(user.balance || 0).toFixed(2)} ETB</td>
+                        <td class="p-3"><span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-[11px] font-bold">VIP ${user.vip || 0}</span></td>
+                        <td class="p-3 text-left font-medium text-gray-200">${user.fullName || '<span class="text-gray-500 italic">Not Added</span>'}</td>
+                        <td class="p-3 text-left text-gray-300 font-mono">${user.bankName ? user.bankName + ' - ' + user.bankAcc : '<span class="text-gray-500 italic">No Bank Saved</span>'}</td>
+                    </tr>`;
                 });
-            });
-        });
+            }
+            document.getElementById('admin-users-table').innerHTML = usersHtml;
 
-        window.approveAction = async (phone, recId, type, amount) => {
-            if(!confirm("ይህንን ክፍያ እርግጠኛ ነህ ማጽደቅ ትፈልጋለህ?")) return;
-            await update(ref(db, `records/${phone}/${recId}`), { status: "Approved" });
-            if(type === "Deposit") {
-                const userSnap = await get(ref(db, `users/+${phone}`));
-                if(userSnap.exists()) {
-                    const newBal = (userSnap.val().balance || 0) + amount;
-                    await update(ref(db, `users/+${phone}`), { balance: newBal });
+            if (recordsSnap.exists()) {
+                recordsSnap.forEach(userRecords => {
+                    userRecords.forEach(r => {
+                        const rec = r.val();
+                        if (rec.status === "Pending") {
+                            const uProfile = usersDataMap[rec.userPhone] || {};
+                            let verificationInfo = "";
+                            
+                            if (rec.type === "Deposit") {
+                                verificationInfo = `FT Transaction Ref: <span class="text-yellow-400 font-bold font-mono bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/20">${rec.ft || 'N/A'}</span>`;
+                            } else {
+                                verificationInfo = `<span class="text-blue-400 font-bold">${uProfile.bankName || 'N/A'}</span> | Acc: <span class="text-white font-bold font-mono">${uProfile.bankAcc || 'N/A'}</span> | Name: <span class="text-gray-300">${uProfile.fullName || 'N/A'}</span>`;
+                            }
+
+                            pendingHtml += `<tr class="border-b border-white/10 bg-white/5">
+                                <td class="p-3 font-bold">${rec.userPhone}</td>
+                                <td class="p-3"><span class="px-2 py-0.5 rounded font-bold text-[11px] ${rec.type==='Deposit'?'bg-green-600/20 text-green-400':'bg-red-600/20 text-red-400'}">${rec.type}</span></td>
+                                <td class="p-3 font-black text-yellow-500">${rec.amount} ETB</td>
+                                <td class="p-3">${verificationInfo}</td>
+                                <td class="p-3 text-orange-400 font-bold tracking-wider animate-pulse">${rec.status}</td>
+                                <td class="p-3 text-center flex gap-2 justify-center">
+                                    <button onclick="reviewTransaction('${rec.userPhone}', '${r.key}', 'Approved', '${rec.type}', ${rec.amount})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow transition">Approve</button>
+                                    <button onclick="reviewTransaction('${rec.userPhone}', '${r.key}', 'Rejected', '${rec.type}', ${rec.amount})" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow transition">Reject</button>
+                                </td>
+                            </tr>`;
+                        }
+                    });
+                });
+            }
+
+            document.getElementById('admin-pending-table').innerHTML = pendingHtml !== "" ? pendingHtml : `<tr><td colspan="6" class="p-4 text-center text-gray-500">No active pending transactions found.</td></tr>`;
+        };
+
+        // የደንበኞች መፈለጊያ (Search)
+        window.adminSearchUser = async () => {
+            const query = document.getElementById('admin-search-input').value.trim().toUpperCase();
+            if (!query) return alert("Please enter target phone or invite code.");
+
+            const usersSnap = await get(ref(db, 'users'));
+            let matchHtml = "";
+            let matchFound = false;
+
+            if (usersSnap.exists()) {
+                usersSnap.forEach(u => {
+                    const user = u.val();
+                    if (user.phone === query || user.myInvite === query || user.inviteBy === query) {
+                        matchFound = true;
+                        matchHtml += `<tr class="border-b bg-yellow-500/10 border-yellow-500 text-xs">
+                            <td class="p-3 text-left font-bold">${user.phone}</td>
+                            <td class="p-3 text-yellow-500 font-mono">${user.myInvite || 'N/A'}</td>
+                            <td class="p-3 text-gray-400 font-mono">${user.inviteBy || 'Direct'}</td>
+                            <td class="p-3 font-bold text-green-400">${(user.balance || 0).toFixed(2)} ETB</td>
+                            <td class="p-3"><span class="bg-blue-600/30 px-2 py-0.5 rounded text-blue-400 font-bold">VIP ${user.vip || 0}</span></td>
+                            <td class="p-3 text-left font-medium">${user.fullName || 'Not Added'}</td>
+                            <td class="p-3 text-left font-mono">${user.bankName || ''} - ${user.bankAcc || ''}</td>
+                        </tr>`;
+                        document.getElementById('ctrl-user-phone').value = user.phone;
+                    }
+                });
+            }
+
+            if (matchFound) {
+                document.getElementById('admin-users-table').innerHTML = matchHtml;
+            } else {
+                alert("No active system user matches your search parameters.");
+            }
+        };
+
+        // የሂሳብ መጠን መጨመሪያ እና መቀነሻ
+        window.adjustBalance = async (action) => {
+            const phone = document.getElementById('ctrl-user-phone').value.trim();
+            const amount = parseFloat(document.getElementById('ctrl-amount').value);
+            const vipSelected = document.getElementById('ctrl-vip').value;
+
+            if (!phone) return alert("Target phone number is mandatory.");
+            
+            const userRef = ref(db, `users/${phone}`);
+            const uSnap = await get(userRef);
+            if (!uSnap.exists()) return alert("Targeted user record was not found.");
+
+            const currentBal = uSnap.val().balance || 0;
+            let newBal = currentBal;
+
+            if (!isNaN(amount) && amount > 0) {
+                newBal = action === 'add' ? currentBal + amount : currentBal - amount;
+                if (newBal < 0) newBal = 0;
+            }
+
+            let updates = { balance: newBal };
+            if (vipSelected !== "") {
+                updates['vip'] = parseInt(vipSelected);
+            }
+
+            await update(userRef, updates);
+            
+            const cleanPhone = phone.replace(/\+/g, '');
+            if (!isNaN(amount) && amount > 0) {
+                await push(ref(db, `records/${cleanPhone}`), {
+                    type: action === 'add' ? "Admin Credit Correction" : "Admin Debit Charge",
+                    amount: amount,
+                    status: "Approved",
+                    date: new Date().toLocaleDateString()
+                });
+            }
+
+            alert("System updated data successfully.");
+            loadAdminDashboard();
+        };
+
+        // የግብይት ጥያቄዎችን ማፅደቂያ (Approve/Reject System)
+        window.reviewTransaction = async (userPhone, recordKey, newStatus, type, amount) => {
+            const cleanPhone = userPhone.replace(/\+/g, '');
+            const txRef = ref(db, `records/${cleanPhone}/${recordKey}`);
+            const userRef = ref(db, `users/${userPhone}`);
+            const uSnap = await get(userRef);
+
+            if (uSnap.exists()) {
+                const currentBal = uSnap.val().balance || 0;
+                if (newStatus === "Approved" && type === "Deposit") {
+                    await update(userRef, { balance: currentBal + amount });
+                } else if (newStatus === "Rejected" && type === "Withdraw") {
+                    await update(userRef, { balance: currentBal + amount });
                 }
             }
-            alert("ተሳክቷል!");
-        };
 
-        // የ Reject ተግባር - ወጪ (Withdraw) ከሆነ ብሩን ተመላሽ ያደርጋል
-        window.rejectAction = async (phone, recId, type, amount) => {
-            if(!confirm("ይህንን ጥያቄ ውድቅ (Reject) ማድረግ ትፈልጋለህ?")) return;
-            
-            // 1. ሁኔታውን Rejected ማድረግ
-            await update(ref(db, `records/${phone}/${recId}`), { status: "Rejected" });
-            
-            // 2. አይነት (Type) ወጪ (Withdraw ወይም ሌላ ከ Deposit ውጪ) ከሆነ ብሩን መመለስ
-            if(type !== "Deposit") {
-                const userSnap = await get(ref(db, `users/+${phone}`));
-                if(userSnap.exists()) {
-                    const currentBal = userSnap.val().balance || 0;
-                    const newBal = currentBal + amount; // የተጠየቀውን የብር መጠን መልሶ መደመር
-                    await update(ref(db, `users/+${phone}`), { balance: newBal });
-                }
-            }
-            
-            alert("ጥያቄው ውድቅ ተደርጓል! ብሩ ተመላሽ ሆኗል።");
-        };
-
-        window.editBalance = (phone, current) => {
-            const amt = prompt("አዲስ የሂሳብ መጠን ያስገቡ:", current);
-            if(amt !== null) {
-                update(ref(db, `users/${phone}`), { balance: parseFloat(amt) });
-            }
-        };
-
-        window.deleteUser = (phone) => {
-            if(confirm(phone + " ይህንን ደንበኛ መሰረዝ ትፈልጋለህ?")) {
-                remove(ref(db, `users/${phone}`));
-            }
+            await update(txRef, { status: newStatus });
+            alert(`Transaction officially marked as ${newStatus}`);
+            loadAdminDashboard();
         };
     </script>
 </body>
