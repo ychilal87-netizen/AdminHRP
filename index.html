@@ -2,119 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Platform | MASTER ADMIN PANEL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HRP Admin | VIP & Balance Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #020617; font-family: 'Inter', sans-serif; color: #f8fafc; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .tab-content { display: none; }
-        .active-tab { display: block; }
-        .admin-nav-active { background: #eab308; color: #000000; font-weight: 900; }
+        body { background: #020617; font-family: 'Inter', sans-serif; color: white; -webkit-tap-highlight-color: transparent; }
+        .glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; }
+        .tab-active { background: #eab308 !important; color: #000 !important; font-weight: 900; box-shadow: 0 5px 15px rgba(234, 179, 8, 0.4); }
+        .vip-badge { background: linear-gradient(135deg, #eab308, #ca8a04); color: black; padding: 2px 10px; border-radius: 99px; font-size: 10px; font-weight: 900; }
+        input { background: rgba(15, 23, 42, 0.9) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: white !important; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="pb-10">
 
-    <!-- Main Admin Dashboard -->
-    <main id="admin-dashboard" class="max-w-6xl mx-auto space-y-6">
-        <header class="flex flex-col md:flex-row justify-between items-center bg-slate-900 p-6 rounded-3xl border border-white/5 gap-4">
-            <div>
-                <h1 class="text-2xl font-black text-yellow-500 tracking-wide"><i class="fas fa-chart-line"></i> HR MASTER ADMIN PANEL</h1>
-                <p class="text-xs text-gray-400">Real-time Financial & User Infrastructure Control</p>
+    <div class="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-lg font-black text-yellow-500 italic uppercase">HRP Manager</h1>
+            <p id="sync-status" class="text-[9px] text-green-400 font-bold uppercase tracking-widest font-mono">● Active</p>
+        </div>
+        <button onclick="loadData()" class="bg-yellow-500 text-black w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+
+    <div class="p-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="glass-card p-4 border-l-4 border-blue-500">
+                <p class="text-gray-400 text-[10px] font-bold uppercase">ጠቅላላ ደንበኞች</p>
+                <h3 id="total-users" class="text-2xl font-black italic text-white">0</h3>
             </div>
-            <button onclick="location.reload()" class="bg-red-600/20 text-red-500 border border-red-500/30 px-6 py-2 rounded-xl text-xs font-bold uppercase hover:bg-red-600 hover:text-white transition">Refresh Data</button>
-        </header>
-
-        <!-- Global Search Bar (ሁሉንም ሰንጠረዦች መፈለጊያ ሳጥን) -->
-        <div class="glass p-4 rounded-2xl flex items-center gap-3 border border-white/10">
-            <i class="fas fa-search text-yellow-500 text-lg"></i>
-            <input type="text" id="global-search" oninput="runGlobalSearch()" placeholder="እዚህ ጋ ይፈልጉ (በስልክ ቁጥር፣ በስም፣ በባንክ አካውንት ወይም በ FT Reference ቁጥር)..." class="w-full bg-black/30 text-sm p-3 rounded-xl border border-white/5 outline-none text-white font-bold placeholder-gray-500">
+            <div class="glass-card p-4 border-l-4 border-yellow-500">
+                <p class="text-gray-400 text-[10px] font-bold uppercase">ጥያቄዎች</p>
+                <h3 id="total-pending" class="text-2xl font-black text-yellow-500 italic">0</h3>
+            </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="grid grid-cols-3 gap-2 bg-slate-900 p-2 rounded-2xl border border-white/5">
-            <button onclick="switchAdminTab('withdrawals')" id="tab-btn-withdrawals" class="admin-nav-btn py-3 text-xs md:text-sm font-bold rounded-xl uppercase transition">Withdrawals</button>
-            <button onclick="switchAdminTab('deposits')" id="tab-btn-deposits" class="admin-nav-btn py-3 text-xs md:text-sm font-bold rounded-xl uppercase transition">Deposits</button>
-            <button onclick="switchAdminTab('users')" id="tab-btn-users" class="admin-nav-btn py-3 text-xs md:text-sm font-bold rounded-xl uppercase transition">Users Directory</button>
-        </nav>
+        <div class="space-y-2">
+            <input type="text" id="adminSearch" oninput="filterAll()" placeholder="በስልክ ወይም በስም ፈልግ..." class="w-full px-4 py-3 rounded-xl outline-none text-sm border border-white/10">
+            <input type="text" id="teamSearch" oninput="filterAll()" placeholder="በጋባዥ ኮድ (Team) ፈልግ..." class="w-full px-4 py-3 rounded-xl outline-none text-sm border border-white/10">
+        </div>
 
-        <!-- WITHDRAWALS MANAGEMENT TAB -->
-        <section id="admin-withdrawals" class="admin-tab-content glass p-6 rounded-3xl space-y-4">
-            <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                <h2 class="text-base font-bold text-red-400 uppercase"><i class="fas fa-money-check-alt"></i> Pending Withdrawal Requests</h2>
-                <span class="bg-red-500/10 text-red-400 text-xs px-3 py-1 rounded-full font-bold" id="count-withdrawals">0 Requests</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="bg-slate-800 text-gray-400 uppercase tracking-wider border-b border-white/10">
-                            <th class="p-3">User / Date</th>
-                            <th class="p-3">Bank Details (ሙሉ ስም/ቁጥር)</th>
-                            <th class="p-3">Requested Amt</th>
-                            <th class="p-3 text-green-400">Net to Pay (10% Off)</th>
-                            <th class="p-3 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-withdraw-tbody" class="divide-y divide-white/5">
-                        <!-- Dynamic injection -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div class="flex bg-slate-900 rounded-2xl p-1 shadow-inner">
+            <button onclick="toggleView('users')" id="btn-users" class="flex-1 py-3.5 rounded-xl text-xs font-black transition tab-active uppercase">Users</button>
+            <button onclick="toggleView('requests')" id="btn-requests" class="flex-1 py-3.5 rounded-xl text-xs font-black transition text-gray-500 uppercase">Requests</button>
+        </div>
 
-        <!-- DEPOSITS MANAGEMENT TAB -->
-        <section id="admin-deposits" class="admin-tab-content glass p-6 rounded-3xl space-y-4">
-            <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                <h2 class="text-base font-bold text-green-400 uppercase"><i class="fas fa-wallet"></i> Pending Deposit Verifications</h2>
-                <span class="bg-green-500/10 text-green-400 text-xs px-3 py-1 rounded-full font-bold" id="count-deposits">0 Requests</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="bg-slate-800 text-gray-400 uppercase tracking-wider border-b border-white/10">
-                            <th class="p-3">User / Date</th>
-                            <th class="p-3">Amount</th>
-                            <th class="p-3 text-yellow-500">FT Reference Number</th>
-                            <th class="p-3 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-deposit-tbody" class="divide-y divide-white/5">
-                        <!-- Dynamic injection -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div id="view-users" class="space-y-4">
+            <div id="users-container" class="space-y-4"></div>
+        </div>
 
-        <!-- USERS DIRECTORY TAB -->
-        <section id="admin-users" class="admin-tab-content glass p-6 rounded-3xl space-y-4">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-3 gap-2">
-                <h2 class="text-base font-bold text-yellow-500 uppercase"><i class="fas fa-users-cog"></i> Registered System Users</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs whitespace-nowrap">
-                    <thead>
-                        <tr class="bg-slate-800 text-gray-400 uppercase tracking-wider border-b border-white/10">
-                            <th class="p-3">Phone</th>
-                            <th class="p-3 text-yellow-500">Password</th>
-                            <th class="p-3 text-red-400">Withdraw PIN</th>
-                            <th class="p-3">Current Balance</th>
-                            <th class="p-3">VIP</th>
-                            <th class="p-3">Bank Details Configured</th>
-                            <th class="p-3 text-center">Manual Fund Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-users-tbody" class="divide-y divide-white/5">
-                        <!-- Dynamic injection -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+        <div id="view-requests" class="hidden space-y-4">
+            <div id="requests-container" class="space-y-4"></div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDE_60krnzvt-40JavcDEABzf0JqbeBZZY",
@@ -128,209 +73,166 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let currentUsers = {};
 
-        // በቀጥታ ሲከፈት መስራት እንዲጀምር
-        window.addEventListener('DOMContentLoaded', () => {
-            switchAdminTab('withdrawals');
-            startLiveListeners();
-        });
-
-        window.switchAdminTab = (tabName) => {
-            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active-tab'));
-            document.querySelectorAll('.admin-nav-btn').forEach(el => el.classList.remove('admin-nav-active'));
+        window.loadData = async () => {
+            document.getElementById('sync-status').innerText = "SYNCING...";
+            const [uSnap, rSnap] = await Promise.all([get(ref(db, 'users')), get(ref(db, 'records'))]);
             
-            document.getElementById(`admin-${tabName}`).classList.add('active-tab');
-            document.getElementById(`tab-btn-${tabName}`).classList.add('admin-nav-active');
+            currentUsers = {};
+            if(uSnap.exists()) {
+                uSnap.forEach(u => {
+                    const cleanKey = u.key.replace(/[^0-9]/g, "");
+                    currentUsers[cleanKey] = { ...u.val(), id: u.key };
+                });
+            }
+
+            renderUsers();
+            renderRequests(rSnap);
+            document.getElementById('total-users').innerText = Object.keys(currentUsers).length;
+            document.getElementById('sync-status').innerText = "● ONLINE";
         };
 
-        function startLiveListeners() {
-            // 1. Listen for Pending Withdrawals
-            onValue(ref(db, 'withdrawals'), (snapshot) => {
-                const tbody = document.getElementById('admin-withdraw-tbody');
-                tbody.innerHTML = "";
-                let count = 0;
-                
-                if(snapshot.exists()) {
-                    snapshot.forEach((child) => {
-                        const key = child.key;
-                        const w = child.val();
-                        if(w.status === "Pending") {
-                            count++;
-                            const searchMeta = `${w.phone} ${w.bankName || ''} ${w.bankAccount || ''} ${w.fullName || ''}`.toLowerCase();
-                            tbody.innerHTML += `
-                                <tr class="hover:bg-white/5 transition withdraw-row" data-search="${searchMeta}">
-                                    <td class="p-3 font-bold">${w.phone}<br><span class="text-[10px] opacity-40">${w.date || '---'}</span></td>
-                                    <td class="p-3">
-                                        <div class="bg-black/30 p-2 rounded-lg border border-white/5 space-y-1">
-                                            <p><span class="text-gray-400">Bank:</span> <b class="text-yellow-500">${w.bankName || '---'}</b></p>
-                                            <p><span class="text-gray-400">Acc Num:</span> <b class="text-white select-all font-mono tracking-wider">${w.bankAccount || '---'}</b></p>
-                                            <p><span class="text-gray-400">Full Name:</span> <b class="text-gray-200">${w.fullName || '---'}</b></p>
-                                        </div>
-                                    </td>
-                                    <td class="p-3 font-bold text-gray-300">${w.amount} ETB</td>
-                                    <td class="p-3 font-black text-green-400 text-sm">${(w.amount * 0.9).toFixed(2)} ETB</td>
-                                    <td class="p-3 text-center space-x-2">
-                                        <button onclick="actionWithdraw('${key}', '${w.phone}', ${w.amount}, 'Approve')" class="bg-green-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-green-500 transition">Approve</button>
-                                        <button onclick="actionWithdraw('${key}', '${w.phone}', ${w.amount}, 'Reject')" class="bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-red-500 transition">Reject</button>
-                                    </td>
-                                </tr>
-                            `;
-                        }
-                    });
-                }
-                document.getElementById('count-withdrawals').innerText = `${count} Requests`;
-                if(count === 0) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500">No pending withdrawals.</td></tr>`;
-                runGlobalSearch(); // Keep filter persistent on live updates
-            });
+        function renderUsers() {
+            let html = "";
+            Object.values(currentUsers).forEach(u => {
+                html += `
+                <div class="glass-card p-4 space-y-3 user-item" 
+                     data-search="${u.id} ${u.fullName || ''}" 
+                     data-team="${(u.inviteBy || '').toUpperCase()}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-yellow-500 font-black text-sm">${u.id}</p>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">${u.fullName || 'NO NAME'}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="vip-badge">VIP ${u.vip || 0}</span>
+                            <p class="text-green-400 font-black text-sm mt-1">${(u.balance || 0).toFixed(2)} ETB</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/40 p-3 rounded-xl text-[10px] space-y-1 border border-white/5 font-medium">
+                        <div class="flex justify-between text-gray-400 border-b border-white/5 pb-1 mb-1 italic">
+                            <span>SAVED ACCOUNT INFO</span>
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="flex justify-between"><span>Bank Name:</span> <span class="text-yellow-500 font-bold">${u.bankName || 'Not Set'}</span></div>
+                        <div class="flex justify-between"><span>Account No:</span> <span class="text-white font-mono font-bold">${u.bankAcc || 'Not Set'}</span></div>
+                        <div class="flex justify-between"><span>Full Name:</span> <span class="text-white uppercase">${u.fullName || 'Not Set'}</span></div>
+                        <div class="flex justify-between pt-1 border-t border-white/5"><span>Invited By:</span> <span class="text-blue-400 font-bold">${u.inviteBy || 'Direct'}</span></div>
+                    </div>
 
-            // 2. Listen for Pending Deposits
-            onValue(ref(db, 'deposits'), (snapshot) => {
-                const tbody = document.getElementById('admin-deposit-tbody');
-                tbody.innerHTML = "";
-                let count = 0;
-                
-                if(snapshot.exists()) {
-                    snapshot.forEach((child) => {
-                        const key = child.key;
-                        const d = child.val();
+                    <div class="flex gap-2">
+                        <button onclick="controlVIP('${u.id}', ${u.vip || 0})" class="flex-1 bg-yellow-500/10 text-yellow-500 py-2.5 rounded-xl text-[10px] font-black border border-yellow-500/20 active:bg-yellow-500 active:text-black transition uppercase">
+                           VIP ቀይር
+                        </button>
+                        <button onclick="controlBalance('${u.id}', ${u.balance || 0})" class="flex-1 bg-green-500/10 text-green-400 py-2.5 rounded-xl text-[10px] font-black border border-green-500/20 active:bg-green-500 active:text-black transition uppercase">
+                           ብር ቀይር
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('users-container').innerHTML = html;
+        }
+
+        function renderRequests(snap) {
+            let html = "";
+            let count = 0;
+            if(snap.exists()) {
+                snap.forEach(userFolder => {
+                    userFolder.forEach(rec => {
+                        const d = rec.val();
                         if(d.status === "Pending") {
                             count++;
-                            const searchMeta = `${d.phone} ${d.reference || ''}`.toLowerCase();
-                            tbody.innerHTML += `
-                                <tr class="hover:bg-white/5 transition deposit-row" data-search="${searchMeta}">
-                                    <td class="p-3 font-bold">${d.phone}<br><span class="text-[10px] opacity-40">${d.date || '---'}</span></td>
-                                    <td class="p-3 font-black text-green-400 text-sm">${d.amount} ETB</td>
-                                    <td class="p-3 font-mono font-bold text-yellow-500 text-sm select-all tracking-wider">${d.reference}</td>
-                                    <td class="p-3 text-center space-x-2">
-                                        <button onclick="actionDeposit('${key}', '${d.phone}', ${d.amount}, 'Approve')" class="bg-green-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-green-500 transition">Approve</button>
-                                        <button onclick="actionDeposit('${key}', '${d.phone}', ${d.amount}, 'Reject')" class="bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-red-500 transition">Reject</button>
-                                    </td>
-                                </tr>
-                            `;
+                            const u = currentUsers[userFolder.key.replace(/[^0-9]/g, "")] || {};
+                            const isDep = d.type === "Deposit";
+                            html += `
+                            <div class="glass-card p-4 border-l-4 ${isDep ? 'border-green-500' : 'border-red-500'}">
+                                <div class="flex justify-between text-[11px] mb-2 text-gray-400 font-black uppercase"><span>${userFolder.key}</span><span>${d.type}</span></div>
+                                <h4 class="text-xl font-black text-white mb-3">${d.amount} ETB</h4>
+                                <div class="bg-black/50 p-3 rounded-xl text-[10px] mb-4 space-y-1">
+                                    ${isDep ? `<div>FT Ref: <span class="text-yellow-500 font-bold font-mono">${d.ft || '---'}</span></div>` : 
+                                    `<div>ባንክ: <span class="text-blue-400 font-bold">${u.bankName || '---'}</span></div>
+                                     <div>አካውንት: <span class="text-white font-mono">${u.bankAcc || '---'}</span></div>
+                                     <div>ስም: <span class="text-white font-bold">${u.fullName || '---'}</span></div>`}
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="txAction('${userFolder.key}', '${rec.key}', 'Approved', '${d.type}', ${d.amount})" class="flex-1 bg-green-600 py-3 rounded-xl text-[11px] font-black uppercase">Approve</button>
+                                    <button onclick="txAction('${userFolder.key}', '${rec.key}', 'Rejected', '${d.type}', ${d.amount})" class="flex-1 bg-red-600 py-3 rounded-xl text-[11px] font-black uppercase">Reject</button>
+                                </div>
+                            </div>`;
                         }
                     });
-                }
-                document.getElementById('count-deposits').innerText = `${count} Requests`;
-                if(count === 0) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-500">No pending deposits.</td></tr>`;
-                runGlobalSearch();
-            });
-
-            // 3. Listen for Users Management Directory
-            onValue(ref(db, 'users'), (snapshot) => {
-                const tbody = document.getElementById('admin-users-tbody');
-                tbody.innerHTML = "";
-                if(snapshot.exists()) {
-                    snapshot.forEach((child) => {
-                        const u = child.val();
-                        const searchMeta = `${u.phone} ${u.myInvite || ''} ${u.bankAccount || ''} ${u.bankFullName || ''}`.toLowerCase();
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-white/5 border-b border-white/5 user-row" data-search="${searchMeta}">
-                                <td class="p-3 font-bold text-white">${u.phone}<br><span class="text-[10px] text-yellow-500 font-mono">${u.myInvite || 'No Code'}</span></td>
-                                <td class="p-3 font-mono font-bold text-yellow-500 select-all">${u.password || '---'}</td>
-                                <td class="p-3 font-mono font-bold text-red-400 select-all">${u.pin || '---'}</td>
-                                <td class="p-3 font-black text-green-400 text-sm">${(u.balance || 0).toFixed(2)} ETB</td>
-                                <td class="p-3"><span class="bg-blue-500/10 text-blue-400 font-bold px-2 py-0.5 rounded">VIP ${u.vip || 0}</span></td>
-                                <td class="p-3 text-gray-300">
-                                    ${u.bankAccount ? `<b>${u.bankName}</b> - <span class="font-mono">${u.bankAccount}</span><br><small class="opacity-50">${u.bankFullName || ''}</small>` : '<span class="text-red-500 italic text-[11px]">Not Configured</span>'}
-                                </td>
-                                <td class="p-3 text-center">
-                                    <button onclick="modifyUserBalance('${u.phone}')" class="bg-slate-700 text-white px-3 py-1 rounded border border-white/10 font-bold hover:bg-yellow-500 hover:text-black transition text-[11px]">Edit Balance</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-                runGlobalSearch();
-            });
+                });
+            }
+            document.getElementById('requests-container').innerHTML = html || '<p class="text-center py-20 text-gray-500 italic">No pending requests.</p>';
+            document.getElementById('total-pending').innerText = count;
         }
 
-        // Global Live Search Filter (ሁሉንም ሰንጠረዦች በአንዴ መፈለጊያ ሎጂክ)
-        window.runGlobalSearch = () => {
-            const query = document.getElementById('global-search').value.toLowerCase().trim();
-            
-            // Filter Withdrawals
-            document.querySelectorAll('.withdraw-row').forEach(row => {
-                const meta = row.getAttribute('data-search');
-                row.style.display = meta.includes(query) ? "" : "none";
-            });
-
-            // Filter Deposits
-            document.querySelectorAll('.deposit-row').forEach(row => {
-                const meta = row.getAttribute('data-search');
-                row.style.display = meta.includes(query) ? "" : "none";
-            });
-
-            // Filter Users Directory
-            document.querySelectorAll('.user-row').forEach(row => {
-                const meta = row.getAttribute('data-search');
-                row.style.display = meta.includes(query) ? "" : "none";
-            });
-        };
-
-        window.actionWithdraw = async (key, phone, amount, action) => {
-            if(!confirm(`Are you sure you want to ${action} this withdrawal request of ${amount} ETB?`)) return;
-            
-            if(action === "Approve") {
-                await update(ref(db, `withdrawals/${key}`), { status: "Approved" });
-                await logUserTransaction(phone, "Withdrawal", -amount, "Approved");
-                alert("Withdrawal marked as Approved!");
-            } else {
-                const userSnap = await get(ref(db, `users/${phone}`));
-                if(userSnap.exists()) {
-                    const currentBalance = userSnap.val().balance || 0;
-                    await update(ref(db, `users/${phone}`), { balance: currentBalance + amount });
-                }
-                await update(ref(db, `withdrawals/${key}`), { status: "Rejected" });
-                await logUserTransaction(phone, "Withdrawal Rejected", amount, "Rejected");
-                alert("Withdrawal Rejected & Funds Returned to User Balance.");
-            }
-        };
-
-        window.actionDeposit = async (key, phone, amount, action) => {
-            if(!confirm(`Are you sure you want to ${action} this deposit request of ${amount} ETB?`)) return;
-
-            if(action === "Approve") {
-                const userSnap = await get(ref(db, `users/${phone}`));
-                if(userSnap.exists()) {
-                    const currentBalance = userSnap.val().balance || 0;
-                    await update(ref(db, `users/${phone}`), { balance: currentBalance + amount });
-                    await update(ref(db, `deposits/${key}`), { status: "Approved" });
-                    await logUserTransaction(phone, "Deposit Credit", amount, "Approved");
-                    alert("Deposit Verified and Credited Successfully!");
+        window.controlVIP = async (id, currentVip) => {
+            const newVal = prompt(`የ ${id} አዲስ VIP ያስገቡ (0-5):\nአሁን ያለው: VIP ${currentVip}`, currentVip);
+            if(newVal !== null && newVal !== "") {
+                const vipLevel = parseInt(newVal);
+                if(vipLevel >= 0 && vipLevel <= 5) {
+                    await update(ref(db, `users/${id}`), { vip: vipLevel });
+                    alert(`ተሳክቷል! ${id} ወደ VIP ${vipLevel} ተቀይሯል።`);
+                    loadData();
                 } else {
-                    alert("Error: User account not found.");
+                    alert("እባክህ ከ 0 እስከ 5 ያለ ቁጥር ተጠቀም!");
                 }
-            } else {
-                await update(ref(db, `deposits/${key}`), { status: "Rejected" });
-                await logUserTransaction(phone, "Deposit Denied", amount, "Rejected");
-                alert("Deposit request rejected.");
             }
         };
 
-        window.modifyUserBalance = async (phone) => {
-            const userSnap = await get(ref(db, `users/${phone}`));
-            if(!userSnap.exists()) return alert("User not found");
-            
-            const currentBal = userSnap.val().balance || 0;
-            const newBalInput = prompt(`Current Balance for ${phone} is: ${currentBal} ETB. Enter New Absolute Balance Amount:`, currentBal);
-            
-            if(newBalInput !== null && !isNaN(parseFloat(newBalInput))) {
-                const targetBalance = parseFloat(newBalInput);
-                await update(ref(db, `users/${phone}`), { balance: targetBalance });
-                await logUserTransaction(phone, "Admin Balance Adjustment", targetBalance - currentBal, "Success");
-                alert("User Balance Updated Successfully.");
+        window.controlBalance = async (id, currentBal) => {
+            const newVal = prompt(`የ ${id} አዲስ የብር መጠን ያስገቡ:\nአሁን ያለው: ${currentBal} ETB`, currentBal);
+            if(newVal !== null && newVal !== "") {
+                const balAmount = parseFloat(newVal);
+                if(!isNaN(balAmount)) {
+                    await update(ref(db, `users/${id}`), { balance: balAmount });
+                    alert(`ተሳክቷል! የ ${id} ሂሳብ ወደ ${balAmount} ETB ተቀይሯል።`);
+                    loadData();
+                } else {
+                    alert("እባክህ ትክክለኛ የብር መጠን ያስገቡ!");
+                }
             }
         };
 
-        async function logUserTransaction(phone, type, amount, status) {
-            const pathId = phone.replace(/\+/g, '');
-            await push(ref(db, `records/${pathId}`), {
-                type: type,
-                amount: amount,
-                status: status,
-                date: new Date().toLocaleDateString()
+        window.filterAll = () => {
+            const searchQ = document.getElementById('adminSearch').value.toLowerCase();
+            const teamQ = document.getElementById('teamSearch').value.toUpperCase();
+            document.querySelectorAll('.user-item').forEach(box => {
+                const dataText = box.getAttribute('data-search').toLowerCase();
+                const teamText = box.getAttribute('data-team');
+                const matchesSearch = dataText.includes(searchQ);
+                const matchesTeam = teamQ === "" || teamText === teamQ;
+                box.style.display = (matchesSearch && matchesTeam) ? 'block' : 'none';
             });
-        }
+        };
+
+        window.txAction = async (uk, rk, s, t, a) => {
+            try {
+                const uRef = ref(db, `users/${uk}`);
+                const rRef = ref(db, `records/${uk}/${rk}`);
+                if(s === "Approved" && t === "Deposit") {
+                    const snap = await get(uRef);
+                    if(snap.exists()) await update(uRef, { balance: (snap.val().balance || 0) + a });
+                } else if(s === "Rejected" && t === "Withdraw") {
+                    const snap = await get(uRef);
+                    if(snap.exists()) await update(uRef, { balance: (snap.val().balance || 0) + a });
+                }
+                await update(rRef, { status: s });
+                loadData();
+            } catch(e) { alert(e.message); }
+        };
+
+        window.toggleView = (v) => {
+            document.getElementById('view-users').classList.toggle('hidden', v !== 'users');
+            document.getElementById('view-requests').classList.toggle('hidden', v !== 'requests');
+            document.getElementById('btn-users').className = `flex-1 py-3.5 rounded-xl text-xs font-black transition ${v === 'users' ? 'tab-active' : 'text-gray-500'}`;
+            document.getElementById('btn-requests').className = `flex-1 py-3.5 rounded-xl text-xs font-black transition ${v === 'requests' ? 'tab-active' : 'text-gray-500'}`;
+        };
+
+        window.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>
