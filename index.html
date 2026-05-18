@@ -58,8 +58,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        // ቨርዥኑን ወደ 10.7.0 ወጥ አድርገነዋል ችግሩን ለመፍታት
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDE_60krnzvt-40JavcDEABzf0JqbeBZZY",
@@ -76,21 +77,30 @@
         let currentUsers = {};
 
         window.loadData = async () => {
-            document.getElementById('sync-status').innerText = "SYNCING...";
-            const [uSnap, rSnap] = await Promise.all([get(ref(db, 'users')), get(ref(db, 'records'))]);
-            
-            currentUsers = {};
-            if(uSnap.exists()) {
-                uSnap.forEach(u => {
-                    const cleanKey = u.key.replace(/[^0-9]/g, "");
-                    currentUsers[cleanKey] = { ...u.val(), id: u.key };
-                });
-            }
+            try {
+                document.getElementById('sync-status').innerText = "SYNCING...";
+                // እዚህ ጋር የነበረው ድርብ ref(ref(db)...) ስህተት ተስተካክሏል
+                const [uSnap, rSnap] = await Promise.all([
+                    get(ref(db, 'users')), 
+                    get(ref(db, 'records'))
+                ]);
+                
+                currentUsers = {};
+                if(uSnap.exists()) {
+                    uSnap.forEach(u => {
+                        const cleanKey = u.key.replace(/[^0-9]/g, "");
+                        currentUsers[cleanKey] = { ...u.val(), id: u.key };
+                    });
+                }
 
-            renderUsers();
-            renderRequests(rSnap);
-            document.getElementById('total-users').innerText = Object.keys(currentUsers).length;
-            document.getElementById('sync-status').innerText = "● ONLINE";
+                renderUsers();
+                renderRequests(rSnap);
+                document.getElementById('total-users').innerText = Object.keys(currentUsers).length;
+                document.getElementById('sync-status').innerText = "● ONLINE";
+            } catch (err) {
+                console.error(err);
+                document.getElementById('sync-status').innerText = "● ERROR";
+            }
         };
 
         function renderUsers() {
@@ -211,8 +221,10 @@
 
         window.txAction = async (uk, rk, s, t, a) => {
             try {
-                const uRef = ref(db, `users/${uk}`);
-                const rRef = ref(db, `records/${uk}/${rk}`);
+                const cleanUserKey = uk.startsWith('+') ? uk : '+' + uk; 
+                const uRef = ref(db, `users/${cleanUserKey}`);
+                const rRef = ref(db, `records/${uk.replace(/\+/g, '')}/${rk}`);
+                
                 if(s === "Approved" && t === "Deposit") {
                     const snap = await get(uRef);
                     if(snap.exists()) await update(uRef, { balance: (snap.val().balance || 0) + a });
